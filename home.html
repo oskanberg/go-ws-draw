@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>Websocket Example</title>
+<script type="text/javascript">
+
+var connection;
+
+function establishConnection() {
+    if (window['WebSocket']) {
+        connection = new WebSocket('ws://localhost:8080/ws');
+        connection.onopen = function(evt) {
+            console.log('Connection established!');
+        }
+        connection.onclose = function(evt) {
+            console.log('Connection closed');
+        }
+        connection.onmessage = function(evt) {
+            console.log('Received message!');
+            console.log(JSON.parse(evt.data));
+        }
+        connection.onerror = function (error) {
+            console.log('WebSocket Error ' + error);
+        };
+    } else {
+        alert('Your browser is obsolete!');
+    }
+}
+
+function emit(title, obj) {
+    connection.send(JSON.stringify(obj));
+}
+
+</script>
+</head>
+<body onload="establishConnection();">
+</body>
+</html>
