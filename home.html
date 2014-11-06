@@ -1,38 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<title>Websocket Example</title>
-<script type="text/javascript">
-
-var connection;
-
-function establishConnection() {
-    if (window['WebSocket']) {
-        connection = new WebSocket('ws://localhost:8080/ws');
-        connection.onopen = function(evt) {
-            console.log('Connection established!');
-        }
-        connection.onclose = function(evt) {
-            console.log('Connection closed');
-        }
-        connection.onmessage = function(evt) {
-            console.log('Received message!');
-            console.log(JSON.parse(evt.data));
-        }
-        connection.onerror = function (error) {
-            console.log('WebSocket Error ' + error);
-        };
-    } else {
-        alert('Your browser is obsolete!');
+    <title>Canvas</title>
+    <style type="text/css">
+    html,
+    body {
+        width: 100%;
+        height: 100%;
+        margin: 0px;
+        overflow: hidden;
     }
-}
+    </style>
+    <script type="text/javascript">
+    var connection;
+    var canvas;
+    var context;
 
-function emit(title, obj) {
-    connection.send(JSON.stringify(obj));
-}
+    function setup() {
+        canvas = document.createElement('canvas');
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        document.body.appendChild(canvas);
+        context = canvas.getContext('2d');
+        establishConnection();
+    }
 
-</script>
+    function establishConnection() {
+        if (window['WebSocket']) {
+            connection = new WebSocket('ws://localhost:8080/ws');
+            connection.onopen = function(evt) {
+                console.log('Connection established!');
+            }
+            connection.onclose = function(evt) {
+                console.log('Connection closed');
+            }
+            connection.onmessage = function(evt) {
+                console.log('Received message!');
+                handleMessage(JSON.parse(evt.data));
+            }
+            connection.onerror = function(error) {
+                console.log('WebSocket Error ' + error);
+            };
+        } else {
+            alert('Your browser is obsolete!');
+        }
+    }
+
+    function handleMessage(msg) {
+        console.log(msg);
+        switch (msg.DrawId) {
+            case "Arc":
+                context.beginPath();
+                context.arc(msg.Parameters.X,
+                    msg.Parameters.Y,
+                    msg.Parameters.R, 0, 2 * Math.PI);
+                context.stroke();
+                break;
+            case "Line":
+                context.beginPath();
+                context.moveTo(msg.Parameters.Start.X, msg.Parameters.Start.Y)
+                context.lineTo(msg.Parameters.End.X, msg.Parameters.End.Y)
+                context.stroke();
+            case "Clear":
+                // context.clearRect(0, 0, canvas.width, canvas.height);
+                break;
+            case "SetSize":
+                canvas.width = msg.Parameters.Width;
+                canvas.height = msg.Parameters.Height;
+                break;
+            default:
+                console.log(msg.DrawId);
+                break;
+        }
+    }
+
+    function emit(obj) {
+        connection.send(JSON.stringify(obj));
+    }
+    </script>
 </head>
-<body onload="establishConnection();">
+
+<body onload="setup();">
 </body>
+
 </html>
